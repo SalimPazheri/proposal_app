@@ -20,15 +20,12 @@ export default function AutocompleteField({ table, value, onChange, placeholder,
   const [filteredItems, setFilteredItems] = useState<ReferenceItem[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [inputValue, setInputValue] = useState(value);
+  const [highlightedIndex, setHighlightedIndex] = useState<number>(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    loadItems();
-  }, [table]);
-
-  useEffect(() => {
-    setInputValue(value);
-  }, [value]);
+  useEffect(() => { loadItems(); }, [table]);
+  useEffect(() => { setInputValue(value); }, [value]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -36,20 +33,26 @@ export default function AutocompleteField({ table, value, onChange, placeholder,
         setShowDropdown(false);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Scroll highlighted item into view
+  useEffect(() => {
+    if (listRef.current && highlightedIndex >= 0) {
+      const highlighted = listRef.current.children[highlightedIndex] as HTMLElement;
+      if (highlighted) {
+        highlighted.scrollIntoView({ block: 'nearest' });
+      }
+    }
+  }, [highlightedIndex]);
 
   const loadItems = async () => {
     const { data, error } = await supabase
       .from(table)
       .select('id, name')
       .order('name');
-
-    if (!error && data) {
-      setItems(data);
-    }
+    if (!error && data) setItems(data);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -63,9 +66,11 @@ export default function AutocompleteField({ table, value, onChange, placeholder,
       );
       setFilteredItems(filtered);
       setShowDropdown(true);
+      setHighlightedIndex(0); // auto-highlight first match
     } else {
       setFilteredItems([]);
       setShowDropdown(false);
+      setHighlightedIndex(0);
     }
   };
 
@@ -73,6 +78,26 @@ export default function AutocompleteField({ table, value, onChange, placeholder,
     setInputValue(selectedItem.name);
     onChange(selectedItem.name);
     setShowDropdown(false);
+    setHighlightedIndex(0);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showDropdown || filteredItems.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlightedIndex(prev => Math.min(prev + 1, filteredItems.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlightedIndex(prev => Math.max(prev - 1, 0));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (filteredItems[highlightedIndex]) {
+        handleItemSelect(filteredItems[highlightedIndex]);
+      }
+    } else if (e.key === 'Escape') {
+      setShowDropdown(false);
+    }
   };
 
   const handleBlur = async () => {
@@ -81,17 +106,13 @@ export default function AutocompleteField({ table, value, onChange, placeholder,
         const existingItem = items.find(
           item => item.name.toLowerCase() === inputValue.toLowerCase()
         );
-
         if (!existingItem) {
           const { data, error } = await supabase
             .from(table)
             .insert([{ name: inputValue.trim() }])
             .select()
             .maybeSingle();
-
-          if (!error && data) {
-            setItems([...items, data]);
-          }
+          if (!error && data) setItems([...items, data]);
         }
       }
     }, 200);
@@ -104,6 +125,7 @@ export default function AutocompleteField({ table, value, onChange, placeholder,
           type="text"
           value={inputValue}
           onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
           onFocus={() => {
             if (inputValue.length > 0) {
               const filtered = items.filter(item =>
@@ -111,9 +133,11 @@ export default function AutocompleteField({ table, value, onChange, placeholder,
               );
               setFilteredItems(filtered);
               setShowDropdown(true);
+              setHighlightedIndex(0);
             } else if (items.length > 0) {
               setFilteredItems(items);
               setShowDropdown(true);
+              setHighlightedIndex(0);
             }
           }}
           onBlur={handleBlur}
@@ -125,8 +149,11 @@ export default function AutocompleteField({ table, value, onChange, placeholder,
       </div>
 
       {showDropdown && filteredItems.length > 0 && (
-        <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-          {filteredItems.map((item) => (
+        <div
+          ref={listRef}
+          className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+        >
+          {filteredItems.map((item, index) => (
             <button
               key={item.id}
               type="button"
@@ -134,7 +161,12 @@ export default function AutocompleteField({ table, value, onChange, placeholder,
                 e.preventDefault();
                 handleItemSelect(item);
               }}
-              className="w-full text-left px-4 py-3 hover:bg-teal-50 transition-colors border-b border-slate-100 last:border-b-0"
+              onMouseEnter={() => setHighlightedIndex(index)}
+              className={`w-full text-left px-4 py-3 transition-colors border-b border-slate-100 last:border-b-0 ${
+                index === highlightedIndex
+                  ? 'bg-teal-50 text-teal-700 font-medium'
+                  : 'hover:bg-teal-50'
+              }`}
             >
               <div className="font-medium text-slate-800">{item.name}</div>
             </button>
