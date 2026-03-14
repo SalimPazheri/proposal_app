@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { LogIn, Mail, Lock, UserPlus, X, User, Phone, Globe } from 'lucide-react';
+import { LogIn, Mail, Lock, UserPlus, X, User, Phone, Globe, KeyRound } from 'lucide-react';
 import LandingPage from './LandingPage';
+
+type ModalMode = 'signIn' | 'signUp' | 'forgotPassword';
 
 export default function Auth() {
   const [email, setEmail] = useState('');
@@ -11,9 +13,24 @@ export default function Auth() {
   const [country, setCountry] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [mode, setMode] = useState<ModalMode>('signIn');
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, resetPassword } = useAuth();
+
+  const resetForm = () => {
+    setEmail('');
+    setPassword('');
+    setUserName('');
+    setMobileNo('');
+    setCountry('');
+    setError('');
+  };
+
+  const openModal = (m: ModalMode) => {
+    resetForm();
+    setMode(m);
+    setShowAuthModal(true);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,23 +38,21 @@ export default function Auth() {
     setLoading(true);
 
     try {
-      if (isSignUp) {
-        const { error } = await signUp(email, password, {
-          userName,
-          mobileNo,
-          country
-        });
-
+      if (mode === 'forgotPassword') {
+        const { error } = await resetPassword(email);
+        if (error) {
+          setError(error.message);
+        } else {
+          setError('✅ Password reset email sent! Check your inbox and follow the link to reset your password.');
+        }
+      } else if (mode === 'signUp') {
+        const { error } = await signUp(email, password, { userName, mobileNo, country });
         if (error) {
           setError(error.message);
         } else {
           setError('Account created successfully! You can now sign in.');
-          setIsSignUp(false);
-          setEmail('');
-          setPassword('');
-          setUserName('');
-          setMobileNo('');
-          setCountry('');
+          setMode('signIn');
+          resetForm();
         }
       } else {
         const { error } = await signIn(email, password);
@@ -52,37 +67,28 @@ export default function Auth() {
     }
   };
 
+  const modalTitle = mode === 'signUp' ? 'Create Account' : mode === 'forgotPassword' ? 'Reset Password' : 'Welcome Back';
+  const modalSubtitle =
+    mode === 'signUp'
+      ? 'Create an account to manage your freight business'
+      : mode === 'forgotPassword'
+      ? "Enter your email and we'll send you a reset link"
+      : 'Sign in to manage your freight business';
+  const submitLabel = mode === 'signUp' ? 'Create Account' : mode === 'forgotPassword' ? 'Send Reset Link' : 'Sign In';
+
   return (
     <div className="relative">
       <LandingPage />
 
       <div className="fixed top-6 right-6 z-10 flex gap-3">
         <button
-          onClick={() => {
-            setIsSignUp(false);
-            setShowAuthModal(true);
-            setError('');
-            setEmail('');
-            setPassword('');
-            setUserName('');
-            setMobileNo('');
-            setCountry('');
-          }}
+          onClick={() => openModal('signIn')}
           className="px-6 py-2.5 bg-white text-teal-600 font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all border-2 border-teal-600 hover:bg-teal-50"
         >
           Login
         </button>
         <button
-          onClick={() => {
-            setIsSignUp(true);
-            setShowAuthModal(true);
-            setError('');
-            setEmail('');
-            setPassword('');
-            setUserName('');
-            setMobileNo('');
-            setCountry('');
-          }}
+          onClick={() => openModal('signUp')}
           className="px-6 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all"
         >
           Get Started
@@ -94,10 +100,7 @@ export default function Auth() {
           <div className="w-full max-w-md">
             <div className="bg-white rounded-lg shadow-2xl p-6 border border-teal-100 relative">
               <button
-                onClick={() => {
-                  setShowAuthModal(false);
-                  setError('');
-                }}
+                onClick={() => { setShowAuthModal(false); setError(''); }}
                 aria-label="Close"
                 className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors"
               >
@@ -106,140 +109,103 @@ export default function Auth() {
 
               <div className="text-center mb-6">
                 <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-teal-600 to-emerald-600 rounded-full mb-3">
-                  {isSignUp ? <UserPlus className="w-6 h-6 text-white" /> : <LogIn className="w-6 h-6 text-white" />}
+                  {mode === 'signUp' ? <UserPlus className="w-6 h-6 text-white" /> : mode === 'forgotPassword' ? <KeyRound className="w-6 h-6 text-white" /> : <LogIn className="w-6 h-6 text-white" />}
                 </div>
-                <h1 className="text-2xl font-bold text-slate-800">
-                  {isSignUp ? 'Create Account' : 'Welcome Back'}
-                </h1>
-                <p className="text-sm text-slate-600 mt-2">
-                  {isSignUp ? 'Create an account to manage your freight business' : 'Sign in to manage your freight business'}
-                </p>
+                <h1 className="text-2xl font-bold text-slate-800">{modalTitle}</h1>
+                <p className="text-sm text-slate-600 mt-2">{modalSubtitle}</p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
-                {isSignUp && (
+                {mode === 'signUp' && (
                   <div>
-                    <label htmlFor="userName" className="block text-sm font-medium text-slate-700 mb-1.5">
-                      User Name
-                    </label>
+                    <label htmlFor="userName" className="block text-sm font-medium text-slate-700 mb-1.5">User Name</label>
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                      <input
-                        id="userName"
-                        type="text"
-                        value={userName}
-                        onChange={(e) => setUserName(e.target.value)}
-                        required
+                      <input id="userName" type="text" value={userName} onChange={(e) => setUserName(e.target.value)} required
                         className="w-full pl-10 pr-3 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all outline-none"
-                        placeholder="John Doe"
-                      />
+                        placeholder="John Doe" />
                     </div>
                   </div>
                 )}
 
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1.5">
-                    Email
-                  </label>
+                  <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                    <input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
+                    <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
                       className="w-full pl-10 pr-3 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all outline-none"
-                      placeholder="you@example.com"
-                    />
+                      placeholder="you@example.com" />
                   </div>
                 </div>
 
-                {isSignUp && (
+                {mode === 'signUp' && (
                   <div>
-                    <label htmlFor="mobileNo" className="block text-sm font-medium text-slate-700 mb-1.5">
-                      Mobile No.
-                    </label>
+                    <label htmlFor="mobileNo" className="block text-sm font-medium text-slate-700 mb-1.5">Mobile No.</label>
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                      <input
-                        id="mobileNo"
-                        type="tel"
-                        value={mobileNo}
-                        onChange={(e) => setMobileNo(e.target.value)}
-                        required
+                      <input id="mobileNo" type="tel" value={mobileNo} onChange={(e) => setMobileNo(e.target.value)} required
                         className="w-full pl-10 pr-3 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all outline-none"
-                        placeholder="+1 234 567 8900"
-                      />
+                        placeholder="+1 234 567 8900" />
                     </div>
                   </div>
                 )}
 
-                {isSignUp && (
+                {mode === 'signUp' && (
                   <div>
-                    <label htmlFor="country" className="block text-sm font-medium text-slate-700 mb-1.5">
-                      Country
-                    </label>
+                    <label htmlFor="country" className="block text-sm font-medium text-slate-700 mb-1.5">Country</label>
                     <div className="relative">
                       <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                      <input
-                        id="country"
-                        type="text"
-                        value={country}
-                        onChange={(e) => setCountry(e.target.value)}
-                        required
+                      <input id="country" type="text" value={country} onChange={(e) => setCountry(e.target.value)} required
                         className="w-full pl-10 pr-3 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all outline-none"
-                        placeholder="United States"
-                      />
+                        placeholder="United States" />
                     </div>
                   </div>
                 )}
 
-                <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1.5">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                    <input
-                      id="password"
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      className="w-full pl-10 pr-3 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all outline-none"
-                      placeholder="••••••••"
-                      minLength={6}
-                    />
+                {mode !== 'forgotPassword' && (
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label htmlFor="password" className="block text-sm font-medium text-slate-700">Password</label>
+                      {mode === 'signIn' && (
+                        <button type="button" onClick={() => { resetForm(); setMode('forgotPassword'); }}
+                          className="text-xs text-teal-600 hover:text-teal-700 font-medium transition-colors">
+                          Forgot password?
+                        </button>
+                      )}
+                    </div>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                      <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required
+                        className="w-full pl-10 pr-3 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all outline-none"
+                        placeholder="••••••••" minLength={6} />
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {error && (
-                  <div className={`${error.includes('successfully') ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-700'} border px-4 py-3 rounded-lg text-sm`}>
+                  <div className={`${error.includes('✅') || error.includes('successfully') ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-700'} border px-4 py-3 rounded-lg text-sm`}>
                     {error}
                   </div>
                 )}
 
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-semibold py-3 text-sm rounded-lg transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? 'Please wait...' : isSignUp ? 'Create Account' : 'Sign In'}
+                <button type="submit" disabled={loading}
+                  className="w-full bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-semibold py-3 text-sm rounded-lg transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed">
+                  {loading ? 'Please wait...' : submitLabel}
                 </button>
               </form>
 
               <div className="mt-6 text-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsSignUp(!isSignUp);
-                    setError('');
-                  }}
-                  className="text-sm text-teal-600 hover:text-teal-700 font-medium transition-colors"
-                >
-                  {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
-                </button>
+                {mode === 'forgotPassword' ? (
+                  <button type="button" onClick={() => { resetForm(); setMode('signIn'); }}
+                    className="text-sm text-teal-600 hover:text-teal-700 font-medium transition-colors">
+                    ← Back to Sign In
+                  </button>
+                ) : (
+                  <button type="button" onClick={() => { resetForm(); setMode(mode === 'signIn' ? 'signUp' : 'signIn'); }}
+                    className="text-sm text-teal-600 hover:text-teal-700 font-medium transition-colors">
+                    {mode === 'signUp' ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+                  </button>
+                )}
               </div>
             </div>
           </div>

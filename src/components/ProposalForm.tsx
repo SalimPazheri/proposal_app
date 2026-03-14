@@ -118,6 +118,92 @@ export default function ProposalForm({ onSuccess, editingProposal }: ProposalFor
     setFormData({ ...formData, [name]: value });
   };
 
+  const copyProposalToClipboard = async (proposal: any) => {
+    const quoteYear = new Date(proposal.created_at).getFullYear();
+    const quoteRef = `${String(proposal.quote_number).padStart(5, '0')}/${quoteYear}`;
+    const quoteDate = new Date(proposal.created_at).toLocaleDateString();
+
+    const tableData = [
+      ['', `Quote Ref: ${quoteRef}`, `Date: ${quoteDate}`],
+      ['1.', 'Road Freight', proposal.land_freight ? `${proposal.currency}:${proposal.land_freight}/-` : 'N/A'],
+      ['2.', 'Type of Equipment', proposal.equipment_type ? `${proposal.equipment_type}, Subject to availability` : 'N/A'],
+      ['3.', 'POL ~ POD, Scope of Service', `${proposal.pol} to ${proposal.pod} ${proposal.scope_of_service || 'Land Transport'}`],
+      ['4.', 'Commodity, Packing, Volume, Weight', `${proposal.commodity || ''}, ${proposal.packing || ''}, ${proposal.volume || ''}, ${proposal.weight || ''}`],
+      ['5.', 'Export documentation', proposal.export_documentation || 'On Shippers scope'],
+      ['6.', 'Origin Border Clearance & Fee', proposal.origin_border_clearance_fee || 'Against actual payment receipts'],
+      ['7.', 'Destination Border Clearance & Fee', proposal.transit_border_clearance_fee || 'On Consignee Scope'],
+      ['8.', 'Permission Charges & Toll Charges\nNaqel charges', proposal.permission_naquel_toll_charges || 'Client Scope (if applicable)'],
+      ['9.', 'Destination Customs Duty & Govt: Fee', 'On Consignee or their clearing agent scope.'],
+      ['10.', 'Transit Time', 'Days under usual conditions'],
+      ['11.', 'Required Documents', proposal.required_documents || 'Commercial Invoice, Certificate of Origin, Packing List, Export Certificates - as per cargo spec.'],
+      ['12.', 'Other Requirements', proposal.other_documents || 'Subject to nature of cargo'],
+      ['13.', 'Return Freight (if cargo returns from the border)', proposal.return_freight || '80% of quoted freight + VAT (if applicable)'],
+      ['14.', 'Free Time', ''],
+      ['', 'For Loading & offloading', proposal.free_time_loading || '2 Hours'],
+      ['', 'For Exit Border', proposal.free_time_origin_border || '12 Hours'],
+      ['', 'For destination Border & Fasah', proposal.free_time_destination_border || '24 Hours'],
+      ['15', 'Detention & Delay Charges', proposal.detention_charges || 'AED:500/Day for first 7 days'],
+      ['16.', 'Payment Terms', proposal.payment_terms || 'Cash on Deliver (COD)'],
+      ['17.', 'Quote Validity', proposal.validity || '7 days from the date of Quote'],
+      ['18.', 'Other Documents required', proposal.notes || 'Subject to nature of Cargo'],
+    ];
+
+    const htmlTable = `
+<p style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; margin-bottom: 16px;">
+Thank you for your inquiry and for considering us for this opportunity.<br>
+Please find attached / below our detailed proposal / quotation tailored to your requirements.
+</p>
+<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; font-family: Arial, sans-serif; table-layout: fixed; border: 2px solid #000;">
+  <tbody>
+    ${tableData.map(([num, label, value], index) => `
+    <tr style="border: 1px solid #000;">
+      <td style="width: 30px; padding: 4px 8px; border: 1px solid #000 !important; background-color: ${index === 0 ? '#F2F527' : '#f0f4f8'}; font-weight: ${index === 0 ? 'bold' : 'normal'};">${num}</td>
+      <td style="width: 200px; padding: 4px 8px; border: 1px solid #000 !important; background-color: ${index === 0 ? '#F2F527' : '#e3f2fd'}; font-weight: ${index === 0 ? 'bold' : 'normal'};">${label}</td>
+      <td style="width: 350px; padding: 4px 8px; border: 1px solid #000 !important; background-color: ${index === 0 ? '#F2F527' : '#ffffff'}; font-weight: ${index === 0 ? 'bold' : 'normal'};">${value}</td>
+    </tr>`).join('')}
+  </tbody>
+</table>
+<p style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; margin-top: 16px;">
+We hope the above proposal meets your needs and budget considerations.
+</p>`.trim();
+
+    const plainText = tableData.map(row => row.join('\t')).join('\n');
+
+    const modernCopy = async (): Promise<boolean> => {
+      if (!navigator.clipboard?.write) return false;
+      try {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            'text/html': new Blob([htmlTable], { type: 'text/html' }),
+            'text/plain': new Blob([plainText], { type: 'text/plain' })
+          })
+        ]);
+        return true;
+      } catch { return false; }
+    };
+
+    const execCommandCopy = (): boolean => {
+      try {
+        const container = document.createElement('div');
+        container.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none;z-index:-1;';
+        container.innerHTML = htmlTable;
+        document.body.appendChild(container);
+        const range = document.createRange();
+        range.selectNode(container);
+        const selection = window.getSelection();
+        if (!selection) { document.body.removeChild(container); return false; }
+        selection.removeAllRanges();
+        selection.addRange(range);
+        const success = document.execCommand('copy');
+        selection.removeAllRanges();
+        document.body.removeChild(container);
+        return success;
+      } catch { return false; }
+    };
+
+    await modernCopy() || execCommandCopy();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -175,6 +261,31 @@ export default function ProposalForm({ onSuccess, editingProposal }: ProposalFor
         validity: '',
         notes: '',
       });
+
+      // fetch the saved proposal to get quote_number and created_at
+      let savedProposal = null;
+      if (editingProposal) {
+        const { data } = await supabase
+          .from('proposals')
+          .select('*')
+          .eq('id', editingProposal.id)
+          .single();
+        savedProposal = data;
+      } else {
+        const { data } = await supabase
+          .from('proposals')
+          .select('*')
+          .eq('user_id', user?.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+        savedProposal = data;
+      }
+
+      if (savedProposal) {
+        await copyProposalToClipboard(savedProposal);
+        alert('Proposal saved & copied to clipboard! You can paste it in your email.');
+      }
 
       onSuccess();
     } catch (err: any) {
@@ -239,12 +350,14 @@ export default function ProposalForm({ onSuccess, editingProposal }: ProposalFor
               </label>
               <input
                 name="land_freight"
-                type="text"
+                type="number"
+                min="0"
+                step="0.01"
                 value={formData.land_freight}
                 onChange={handleChange}
                 required
-                className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded focus:ring-1 focus:ring-teal-500 focus:border-transparent transition-all outline-none"
-                placeholder={`e.g., 2,100.00 ${formData.currency}`}
+                className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded focus:ring-1 focus:ring-teal-500 focus:border-transparent transition-all outline-none text-right"
+                placeholder="0.00"
               />
             </div>
 
@@ -290,6 +403,7 @@ export default function ProposalForm({ onSuccess, editingProposal }: ProposalFor
                 table="locations"
                 value={formData.pol}
                 onChange={(value) => handleAutocompleteChange('pol', value)}
+                required={true}
                 placeholder="Select or type loading location"
               />
             </div>
@@ -302,6 +416,7 @@ export default function ProposalForm({ onSuccess, editingProposal }: ProposalFor
                 table="locations"
                 value={formData.pod}
                 onChange={(value) => handleAutocompleteChange('pod', value)}
+                required={true}
                 placeholder="Select or type delivery location"
               />
             </div>
@@ -651,7 +766,7 @@ export default function ProposalForm({ onSuccess, editingProposal }: ProposalFor
           disabled={loading}
           className="px-3 py-1.5 text-sm bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-medium rounded transition-all shadow hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? 'Saving...' : editingProposal ? 'Update Proposal' : 'Save Proposal'}
+          {loading ? 'Saving...' : editingProposal ? 'Update & Copy' : 'Save & Copy'}
         </button>
       </div>
     </form>
