@@ -360,11 +360,15 @@ We hope the above proposal meets your needs and budget considerations.
               </label>
               <input
                 name="land_freight"
-                type="number"
-                min="0"
-                step="0.01"
+                type="text"
+                inputMode="decimal"
                 value={formData.land_freight}
-                onChange={handleChange}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '' || /^[0-9]*\.?[0-9]*$/.test(val)) {
+                    setFormData({ ...formData, land_freight: val });
+                  }
+                }}
                 required
                 className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded focus:ring-1 focus:ring-teal-500 focus:border-transparent transition-all outline-none text-right"
                 placeholder="0.00"
@@ -435,14 +439,77 @@ We hope the above proposal meets your needs and budget considerations.
               <label className="block text-xs font-medium text-slate-700 mb-1">
                 Scope of Service
               </label>
-              <textarea
-                name="scope_of_service"
-                value={formData.scope_of_service}
-                onChange={handleChange}
-                rows={2}
-                className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded focus:ring-1 focus:ring-teal-500 focus:border-transparent transition-all outline-none resize-none"
-                placeholder="Describe the scope of service"
-              />
+              <div className="space-y-1.5">
+                <div className="flex flex-wrap gap-1">
+                  {[
+                    'Cargo Transport',
+                    'Export Documentation',
+                    'Origin Border Clearance',
+                    'Destination Border Clearance',
+                    'Loading & Unloading',
+                    'Customs Inspection',
+                    'Transit Permits',
+                    'Door to Door',
+                  ].map((option) => {
+                    const selected = formData.scope_of_service.split(',').map(s => s.trim()).filter(Boolean).includes(option);
+                    return (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => {
+                          const current = formData.scope_of_service.split(',').map(s => s.trim()).filter(Boolean);
+                          const updated = selected
+                            ? current.filter(s => s !== option)
+                            : [...current, option];
+                          setFormData({ ...formData, scope_of_service: updated.join(', ') });
+                        }}
+                        className={`px-2 py-0.5 text-xs rounded-full border transition-all ${
+                          selected
+                            ? 'bg-teal-600 text-white border-teal-600'
+                            : 'bg-white text-slate-600 border-slate-300 hover:border-teal-400'
+                        }`}
+                      >
+                        {option}
+                      </button>
+                    );
+                  })}
+                </div>
+                {formData.scope_of_service && (
+                  <div className="flex flex-wrap gap-1 px-2 py-1.5 bg-teal-50 border border-teal-200 rounded min-h-[32px]">
+                    {formData.scope_of_service.split(',').map(s => s.trim()).filter(Boolean).map((item, i) => (
+                      <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 bg-teal-100 text-teal-800 text-xs rounded-full">
+                        {item}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = formData.scope_of_service.split(',').map(s => s.trim()).filter(s => s && s !== item);
+                            setFormData({ ...formData, scope_of_service: updated.join(', ') });
+                          }}
+                          className="hover:text-red-500 font-bold leading-none"
+                        >×</button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <input
+                  type="text"
+                  placeholder="Or type custom scope and press Enter"
+                  className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded focus:ring-1 focus:ring-teal-500 focus:border-transparent transition-all outline-none"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const val = (e.target as HTMLInputElement).value.trim();
+                      if (val) {
+                        const current = formData.scope_of_service.split(',').map(s => s.trim()).filter(Boolean);
+                        if (!current.includes(val)) {
+                          setFormData({ ...formData, scope_of_service: [...current, val].join(', ') });
+                        }
+                        (e.target as HTMLInputElement).value = '';
+                      }
+                    }
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>
