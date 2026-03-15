@@ -207,6 +207,16 @@ We hope the above proposal meets your needs and budget considerations.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!formData.pol || !formData.pol.trim()) {
+      setError('POL (Port of Loading) is required.');
+      return;
+    }
+    if (!formData.pod || !formData.pod.trim()) {
+      setError('POD (Port of Discharge) is required.');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -397,7 +407,7 @@ We hope the above proposal meets your needs and budget considerations.
 
             <div>
               <label className="block text-xs font-medium text-slate-700 mb-1">
-                POL (Place of Loading)
+                POL (Place of Loading) <span className="text-red-500">*</span>
               </label>
               <AutocompleteField
                 table="locations"
@@ -410,7 +420,7 @@ We hope the above proposal meets your needs and budget considerations.
 
             <div>
               <label className="block text-xs font-medium text-slate-700 mb-1">
-                POD (Place of Delivery)
+                POD (Place of Delivery) <span className="text-red-500">*</span>
               </label>
               <AutocompleteField
                 table="locations"
