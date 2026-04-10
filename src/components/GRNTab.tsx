@@ -197,7 +197,7 @@ const printGRN = (grn: GRNFull) => {
 <head>
   <title>GRN - ${grn.grn_number}</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing:; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Calibri',Calibri,sans-serif; font-size: 10pt; padding: 24px; padding-top: 30mm; color: #111; }
     h1 { font-size: 13pt; margin-bottom: 4px; color: #1e293b; font-family: 'Calibri',Calibri,sans-serif; }
     .subtitle { font-size: 11px; color: #64748b; margin-bottom: 16px; }
@@ -221,7 +221,7 @@ const printGRN = (grn: GRNFull) => {
 <body>
   <h1>Goods Receipt Note</h1>
   <div class="subtitle">Alpha Line Cargo W.L.L — Warehouse Receipt</div>
-
+ <div class="sub">Alpha Line Cargo W.L.L— Warehouse Receipt</div>
   <table class="info-table">
     <tr>
       <td class="label">GRN Number</td><td>${grn.grn_number}</td>
