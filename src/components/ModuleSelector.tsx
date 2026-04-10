@@ -1,8 +1,8 @@
-import { Users, FileText, Truck, LogOut } from 'lucide-react';
+import { Users, FileText, Truck, LogOut, Warehouse } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 interface ModuleSelectorProps {
-  onSelectModule: (module: 'customers' | 'proposals') => void;
+  onSelectModule: (module: 'customers' | 'proposals' | 'storage') => void;
 }
 
 export default function ModuleSelector({ onSelectModule }: ModuleSelectorProps) {
@@ -35,15 +35,12 @@ export default function ModuleSelector({ onSelectModule }: ModuleSelectorProps) 
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-slate-800 mb-3">
-            Welcome, User
-          </h2>
-          <p className="text-lg text-slate-600">
-            Select a module to get started
-          </p>
+          <h2 className="text-3xl font-bold text-slate-800 mb-3">Welcome, User</h2>
+          <p className="text-lg text-slate-600">Select a module to get started</p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          {/* Customers */}
           <button
             onClick={() => onSelectModule('customers')}
             className="group bg-white rounded-xl shadow-lg p-8 border-2 border-teal-100 hover:border-teal-600 hover:shadow-xl transition-all text-center"
@@ -54,11 +51,10 @@ export default function ModuleSelector({ onSelectModule }: ModuleSelectorProps) 
             <h3 className="text-xl font-bold text-slate-800 mb-2 group-hover:text-teal-600 transition-colors">
               Customers
             </h3>
-            <p className="text-sm text-slate-600">
-              Manage customer information and contacts
-            </p>
+            <p className="text-sm text-slate-600">Manage customer information and contacts</p>
           </button>
 
+          {/* Proposals */}
           <button
             onClick={() => onSelectModule('proposals')}
             className="group bg-white rounded-xl shadow-lg p-8 border-2 border-teal-100 hover:border-teal-600 hover:shadow-xl transition-all text-center"
@@ -69,9 +65,21 @@ export default function ModuleSelector({ onSelectModule }: ModuleSelectorProps) 
             <h3 className="text-xl font-bold text-slate-800 mb-2 group-hover:text-teal-600 transition-colors">
               Proposals
             </h3>
-            <p className="text-sm text-slate-600">
-              Create and manage freight proposals
-            </p>
+            <p className="text-sm text-slate-600">Create and manage freight proposals</p>
+          </button>
+
+          {/* Storage */}
+          <button
+            onClick={() => onSelectModule('storage')}
+            className="group bg-white rounded-xl shadow-lg p-8 border-2 border-purple-100 hover:border-purple-600 hover:shadow-xl transition-all text-center"
+          >
+            <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-indigo-100 group-hover:from-purple-600 group-hover:to-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-4 transition-all">
+              <Warehouse className="w-8 h-8 text-purple-600 group-hover:text-white transition-colors" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-800 mb-2 group-hover:text-purple-600 transition-colors">
+              Storage
+            </h3>
+            <p className="text-sm text-slate-600">Agreements, receipts and deliveries</p>
           </button>
         </div>
       </div>

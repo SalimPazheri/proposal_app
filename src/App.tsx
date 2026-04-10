@@ -1,9 +1,21 @@
+import { useEffect, useState } from 'react';
 import { useAuth } from './contexts/AuthContext';
 import Auth from './components/Auth';
 import Dashboard from './components/Dashboard';
+import ResetPassword from './components/ResetPassword';
 
-function App() {
+export default function App() {
   const { user, loading } = useAuth();
+  const [isRecovery, setIsRecovery] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const type = params.get('type');
+    if (type === 'recovery') {
+      setIsRecovery(true);
+      window.history.replaceState({}, '', '/');
+    }
+  }, []);
 
   if (loading) {
     return (
@@ -16,7 +28,6 @@ function App() {
     );
   }
 
+  if (isRecovery) return <ResetPassword />;
   return user ? <Dashboard /> : <Auth />;
 }
-
-export default App;

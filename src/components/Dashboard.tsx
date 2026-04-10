@@ -4,10 +4,11 @@ import CustomerForm from './CustomerForm';
 import CustomerList from './CustomerList';
 import ProposalForm from './ProposalForm';
 import ProposalList from './ProposalList';
+import StorageModule from './StorageModule';
 import ModuleSelector from './ModuleSelector';
-import { LogOut, Truck, Users, FileText, ArrowLeft } from 'lucide-react';
+import { LogOut, Truck, Users, FileText, ArrowLeft, Warehouse } from 'lucide-react';
 
-type TabType = 'customers' | 'proposals';
+type TabType = 'customers' | 'proposals' | 'storage';
 
 export default function Dashboard() {
   const { user, signOut } = useAuth();
@@ -92,6 +93,17 @@ export default function Dashboard() {
               <FileText className="w-3.5 h-3.5" />
               Proposals
             </button>
+            <button
+              onClick={() => setActiveTab('storage')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded font-medium transition-all ${
+                activeTab === 'storage'
+                  ? 'bg-gradient-to-r from-teal-600 to-emerald-600 text-white shadow'
+                  : 'text-slate-600 hover:bg-teal-50'
+              }`}
+            >
+              <Warehouse className="w-3.5 h-3.5" />
+              Storage
+            </button>
           </div>
         </div>
 
@@ -106,6 +118,8 @@ export default function Dashboard() {
               <ProposalForm onSuccess={handleSuccess} editingProposal={editingProposal} />
               <ProposalList refresh={refreshKey} onEdit={handleEdit} />
             </div>
+          ) : activeTab === 'storage' ? (
+            <StorageModule />
           ) : null}
         </main>
       </div>
