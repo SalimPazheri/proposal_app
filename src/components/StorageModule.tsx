@@ -1,15 +1,17 @@
 import { useState } from 'react';
-import { Warehouse, FileSignature, PackageCheck, PackageMinus } from 'lucide-react';
+import { Warehouse, FileSignature, PackageCheck, PackageMinus, FileText } from 'lucide-react';
 import StorageAgreementTab from './StorageAgreementTab';
 import GRNTab from './GRNTab';
 import GDNTab from './GDNTab';
+import StorageInvoiceTab from './StorageInvoiceTab';
 
-type StorageTab = 'agreement' | 'grn' | 'gdn';
+type StorageTab = 'agreement' | 'grn' | 'gdn' | 'invoice';
 
 const TABS = [
-  { key: 'agreement' as StorageTab, label: 'Storage Agreement', shortLabel: 'Agreement', icon: FileSignature, color: 'text-purple-600' },
-  { key: 'grn' as StorageTab,       label: 'GRN – Goods Receipt', shortLabel: 'GRN', icon: PackageCheck, color: 'text-emerald-600' },
-  { key: 'gdn' as StorageTab,       label: 'GDN – Goods Delivery', shortLabel: 'GDN', icon: PackageMinus, color: 'text-orange-600' },
+  { key: 'agreement' as StorageTab, label: 'Storage Agreement',  shortLabel: 'Agreement', icon: FileSignature },
+  { key: 'grn'       as StorageTab, label: 'GRN – Goods Receipt', shortLabel: 'GRN',      icon: PackageCheck  },
+  { key: 'gdn'       as StorageTab, label: 'GDN – Goods Delivery',shortLabel: 'GDN',      icon: PackageMinus  },
+  { key: 'invoice'   as StorageTab, label: 'Invoice',             shortLabel: 'Invoice',   icon: FileText      },
 ];
 
 export default function StorageModule() {
@@ -56,6 +58,7 @@ export default function StorageModule() {
       {activeTab === 'agreement' && <StorageAgreementTab />}
       {activeTab === 'grn'       && <GRNTab />}
       {activeTab === 'gdn'       && <GDNTab />}
+      {activeTab === 'invoice'   && <StorageInvoiceTab />}
     </div>
   );
 }
