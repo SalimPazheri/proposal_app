@@ -48,12 +48,12 @@ const DEFAULT_SETTINGS: CompanySettings = {
   address:          'Block No.115, Hidd, Kingdom of Bahrain',
   phone:            '+973 3689 9594',
   email:            'info@alphalinecargo.com',
-  bank_name:        'Bank of Bahrain and Kuwait (BBK)',
+  bank_name:        'Ahli United Bank',
   bank_address:     'Manama, Kingdom of Bahrain',
   account_name:     'Alpha Line Cargo W.L.L',
-  account_no:       'XXXX-XXXX-XXXX',
-  iban:             'BHXXXXXXXXXXXXXX',
-  swift:            'BBKUBHBM',
+  account_no:       '0016-495039-001',
+  iban:             'BH42AUBB00016495039001',
+  swift:            'AUBBBHBM',
   footer_image_url: '',
   invoice_notes:    'Payment due within 30 days of invoice date.',
 };
@@ -175,9 +175,9 @@ function buildInvoiceHTML(p: {
     </div>`;
 
   const footerImageHTML = s.footer_image_url
-    ? `<div style="position:fixed;bottom:0;left:0;right:0;width:100%;margin:0;padding:0;line-height:0">
-        <img src="${s.footer_image_url}" style="width:100%;height:auto;display:block;margin:0;padding:0" alt="Footer"/>
-       </div>`
+  ? `<div style="position:fixed;bottom:0;left:-22mm;right:-22mm;width:calc(100% + 44mm);margin:0;padding:0;line-height:0">
+    <img src="${s.footer_image_url}" style="width:100%;height:auto;display:block;margin:0;padding:0" alt="Footer"/>
+   </div>`
     : `<div style="margin-top:30px;padding-top:12px;border-top:1px solid #eee;display:flex;justify-content:space-between;font-size:7.5pt;color:#bbb">
         <span>${s.company_name} &nbsp;|&nbsp; ${s.address}</span>
         <span>${s.phone} &nbsp;|&nbsp; ${s.email}</span>
@@ -192,7 +192,7 @@ function buildInvoiceHTML(p: {
   @page { size: A4; margin: 16mm 22mm 16mm 22mm; }
   html { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; font-size: 10pt; color: #1a1a1a; background: #fff; padding-bottom: 60px; }
+body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; font-size: 10pt; color: #1a1a1a; background: #fff; padding-bottom: 97px; }
   .header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; }
   .header-left img { height:60px; width:60px; object-fit:contain; display:block; margin-bottom:10px; background:#f5f5f5; border-radius:6px; padding:4px; }
   .invoice-title { font-size:28pt; font-weight:800; letter-spacing:1px; color:#1a1a1a; line-height:1; }
